@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>3MK F X G Chatbot</title>
+  <style>
+    /* Gradient Background Animation */
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(-45deg, #CF9FFF, #5D3FD3, #E0B0FF, #CCCCFF, #7F00FF);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
+
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    h2 {
+      text-align: center;
+      color: white;
+      font-weight: bold;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    #chatbox {
+      height: 600px;
+      overflow-y: scroll;
+      padding: 15px;
+      border-radius: 12px;
+      background-color: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .message {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 15px;
+    }
+
+    .user-message {
+      align-items: flex-end;
+    }
+
+    .msg {
+      max-width: 70%;
+      padding: 12px 16px;
+      border-radius: 16px;
+      line-height: 1.5;
+      font-size: 15px;
+      word-wrap: break-word;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    .user .msg {
+      background-color: #d1e7dd;
+      color: #000;
+      border-radius: 16px 4px 16px 16px;
+    }
+
+    .bot .msg {
+      background-color: #ffffff;
+      color: #000;
+      border-radius: 4px 16px 16px 16px;
+    }
+
+    .sender {
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: white;
+      font-size: 13px;
+    }
+
+    .input-area {
+      display: flex;
+      padding: 15px;
+      background-color: rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      margin-top: 15px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 12px 15px;
+      font-size: 15px;
+      border: none;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    button {
+      padding: 12px 20px;
+      font-size: 15px;
+      margin-left: 10px;
+      border: none;
+      background-color: #7F00FF;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #5D3FD3;
+    }
+
+    /* Scrollbar Styling (Optional) */
+    #chatbox::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    #chatbox::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>💬 3MK F X G</h2>
+
+    <div id="chatbox"></div>
+
+    <div class="input-area">
+      <input type="text" id="userInput" placeholder="Type a message..." />
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    async function sendMessage() {
+      const input = document.getElementById("userInput");
+      const msg = input.value;
+      if (!msg) return;
+
+      appendMessage("You", msg, "user");
+      input.value = "";
+
+      const res = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: msg })
+      });
+
+      const data = await res.json();
+      appendMessage("3MK F X G", data.response, "bot");
+    }
+
+    function appendMessage(sender, text, className) {
+      const chatbox = document.getElementById("chatbox");
+      const messageDiv = document.createElement("div");
+      messageDiv.className = "message " + (className === "bot" ? "" : "user-message");
+
+      const senderDiv = document.createElement("div");
+      senderDiv.className = "sender";
+      senderDiv.innerText = sender;
+
+      const msgDiv = document.createElement("div");
+      msgDiv.className = "msg " + (className === "bot" ? "bot" : "user");
+      msgDiv.innerHTML = text;
+
+      messageDiv.appendChild(senderDiv);
+      messageDiv.appendChild(msgDiv);
+
+      chatbox.appendChild(messageDiv);
+      chatbox.scrollTop = chatbox.scrollHeight;
+    }
+  </script>
+
+</body>
+</html>
