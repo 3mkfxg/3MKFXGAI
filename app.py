@@ -2,6 +2,7 @@
 
 from flask import Flask, request, jsonify
 import gradio as gr
+from werkzeug.middleware.dispatcher import DispatcherMiddleware  # Import DispatcherMiddleware
 
 app = Flask(__name__)
 
@@ -32,10 +33,11 @@ def home():
     return open("templates/index.html").read()
 
 # === MOUNT GRADIO INTO FLASK APP ===
-app = DispatcherMiddleware(app, {
+# Use DispatcherMiddleware to serve both Flask and Gradio
+application = DispatcherMiddleware(app, {
     "/gradio": chat_interface.app
 })
 
 if __name__ == "__main__":
     from werkzeug.serving import run_simple
-    run_simple("0.0.0.0", 8000, app, use_reloader=False)
+    run_simple("0.0.0.0", 8000, application, use_reloader=False)
