@@ -1,24 +1,41 @@
 # app.py
 
+from flask import Flask, request, jsonify
 import gradio as gr
 
+app = Flask(__name__)
+
+# === YOUR CHATBOT FUNCTION ===
 def respond(message, chat_history):
     # Replace this with your real AI logic
     bot_response = f"Echo: {message}"
     chat_history.append((message, bot_response))
-    return "", chat_history  # Return empty string for the textbox and updated chat history
+    return "", chat_history
 
-with gr.Blocks() as demo:
-    chatbot = gr.Chatbot(type="messages")  # Use 'messages' format for future compatibility
-    msg = gr.Textbox(label="Type your message here")
-    clear = gr.Button("Clear Chat")
+# === GRADIO CHAT INTERFACE (for internal use) ===
+chat_interface = gr.ChatInterface(fn=respond)
 
-    state = gr.State([])
+# === CUSTOM FLASK ROUTE FOR YOUR FRONTEND ===
+@app.route("/chat", methods=["POST"])
+def chat():
+    data = request.json
+    user_message = data.get("message")
+    history = data.get("history", [])
 
-    # Bind the submit event to the respond function
-    msg.submit(fn=respond, inputs=[msg, state], outputs=[chatbot, state])
-    clear.click(lambda: ([], []), outputs=[chatbot, state])
+    # Call Gradio function directly
+    response, new_history = respond(user_message, history)
+    return jsonify({"response": response, "history": new_history})
 
-# Launch the app
+# === SERVE CUSTOM HTML PAGE ===
+@app.route("/")
+def home():
+    return open("templates/index.html").read()
+
+# === MOUNT GRADIO INTO FLASK APP ===
+app = DispatcherMiddleware(app, {
+    "/gradio": chat_interface.app
+})
+
 if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=8000)
+    from werkzeug.serving import run_simple
+    run_simple("0.0.0.0", 8000, app, use_reloader=False)
