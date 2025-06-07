@@ -2,15 +2,13 @@
 
 import gradio as gr
 
-# Example chatbot logic
 def respond(message, chat_history):
-    # Replace this with your real AI model or logic
+    # Replace this with your real AI logic
     bot_response = f"Echo: {message}"
     chat_history.append((message, bot_response))
-    return chat_history, chat_history
+    return "", chat_history  # Return empty string for the textbox and updated chat history
 
-# Create the chatbot UI
-with gr.Blocks(theme="default") as demo:
+with gr.Blocks() as demo:
     chatbot = gr.Chatbot()
     msg = gr.Textbox(label="Type your message here")
     clear = gr.Button("Clear Chat")
@@ -18,8 +16,7 @@ with gr.Blocks(theme="default") as demo:
     state = gr.State([])
 
     msg.submit(fn=respond, inputs=[msg, state], outputs=[chatbot, state])
-    clear.click(fn=lambda: ([], []), inputs=[], outputs=[chatbot, state])
+    clear.click(lambda: ([], []), outputs=[chatbot, state])
 
-# Launch the app
 if __name__ == "__main__":
-    demo.launch()
+    demo.launch(server_name="0.0.0.0", server_port=8000)
