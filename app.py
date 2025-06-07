@@ -1,43 +1,38 @@
 # app.py
 
-from flask import Flask, request, jsonify
-import gradio as gr
-from werkzeug.middleware.dispatcher import DispatcherMiddleware  # Import DispatcherMiddleware
+from flask import Flask, request, jsonify, send_from_directory
+from llama_cpp import Llama
 
 app = Flask(__name__)
 
-# === YOUR CHATBOT FUNCTION ===
-def respond(message, chat_history):
-    # Replace this with your real AI logic
-    bot_response = f"Echo: {message}"
-    chat_history.append((message, bot_response))
-    return "", chat_history
+# Load LLaMA 3 GGUF model (make sure path is correct)
+llm = Llama(
+    model_path="./models/llama3-instruct.Q4_K_M.gguf",  # Update this path
+    n_ctx=2048,      # Context length
+    n_threads=4,     # CPU threads
+    verbose=False    # Don't print debug output
+)
 
-# === GRADIO CHAT INTERFACE (for internal use) ===
-chat_interface = gr.ChatInterface(fn=respond)
-
-# === CUSTOM FLASK ROUTE FOR YOUR FRONTEND ===
-@app.route("/chat", methods=["POST"])
-def chat():
-    data = request.json
-    user_message = data.get("message")
-    history = data.get("history", [])
-
-    # Call Gradio function directly
-    response, new_history = respond(user_message, history)
-    return jsonify({"response": response, "history": new_history})
-
-# === SERVE CUSTOM HTML PAGE ===
-@app.route("/")
+@app.route('/')
 def home():
-    return open("templates/index.html").read()
+    return send_from_directory('templates', 'index.html')
 
-# === MOUNT GRADIO INTO FLASK APP ===
-# Use DispatcherMiddleware to serve both Flask and Gradio
-application = DispatcherMiddleware(app, {
-    "/gradio": chat_interface.app
-})
+@app.route('/chat', methods=['POST'])
+def chat():
+    data = request.get_json()
+    user_message = data.get('message', '').strip()
 
-if __name__ == "__main__":
-    from werkzeug.serving import run_simple
-    run_simple("0.0.0.0", 8000, application, use_reloader=False)
+    if not user_message:
+        return jsonify({'response': 'Please say something.'})
+
+    # Build prompt (you can customize this)
+    prompt = f"<|start_header_id|>user<|end_header_id|>\n{user_message}<|start_header_id|>assistant<|end_header_id|>\n"
+
+    # Generate response
+    output = llm(prompt, max_tokens=256, stop=["<|start_header_id|>"])
+    bot_response = output["choices"][0]["text"].strip()
+
+    return jsonify({'response': bot_response})
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8000)

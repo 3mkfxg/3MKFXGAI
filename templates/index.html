@@ -146,20 +146,29 @@
   <script>
     async function sendMessage() {
       const input = document.getElementById("userInput");
-      const msg = input.value;
+      const msg = input.value.trim();
       if (!msg) return;
 
       appendMessage("You", msg, "user");
       input.value = "";
 
-      const res = await fetch("https://threemkfxgai-3.onrender.com/chat",  {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: msg })
-      });
+      try {
+        const res = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: msg })
+        });
 
-      const data = await res.json();
-      appendMessage("3MK F X G", data.response, "bot");
+        if (!res.ok) {
+          throw new Error(`Server error: ${res.status}`);
+        }
+
+        const data = await res.json();
+        appendMessage("3MK F X G", data.response, "bot");
+      } catch (error) {
+        console.error("Error:", error);
+        appendMessage("3MK F X G", "⚠️ Something went wrong.", "bot");
+      }
     }
 
     function appendMessage(sender, text, className) {
